@@ -5,50 +5,44 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include "rush.h"
+#include "rush_input.h"
 
-#define EEXIT -1
-
-int rush_prompt(void) {
-    char input_ch = '\0';
-    int reading_input = 0;
-    char cmd[1024];
-    size_t index = 0;
-    int result = 0;
-
-    reading_input = 1;
-    while(reading_input) {
-        /* Put out the configured prompt */
-        printf(">> ");
-        index = 0;
-        for (size_t x = 0; x < 1024; x++) {
-            cmd[x] = '\0';
-        }
-        /* Take in any user input until a newline character */
-        do {
-            input_ch = getchar();
-            cmd[index] = input_ch;
-            index++;
-        } while (input_ch != '\n' && input_ch != '\0');
-        result = system(cmd);
-        if (result != 0) {
-            reading_input = 0;
-        }
+void
+rush_prompt (char *line, int result) {
+    char *color_code;
+    if (result != 0) {
+        color_code = "\x1b[31m"; // RED
+    } else {
+        color_code = "\x1b[32m"; // GREEN
     }
-    return EEXIT;
+    printf("%s~> \x1b[0m", color_code);
+    rush_getline(line, RUSH_MAX_CMD_SIZE);
+}
+
+int
+rush_loop (void) {
+    int result = 0;
+    bool running = true;
+    char cmd[RUSH_MAX_CMD_SIZE];
+
+    while (running) {
+        rush_prompt(cmd, result);
+        result = system(cmd);
+        if (result != 0)
+            running = false;
+    }
+
+    return result;
 }
 
 int
 main (int    argc,
       char **argv) {
-    unsigned int exit = 0;
-    int result = 1;
-    /* Init */
+    int result = 0;
     /* Enter loop */
-    while(!exit) {
-        result = rush_prompt();
-        if (result == EEXIT) {
-            exit = 1;
-        }
-    }
+    result = rush_loop();
+    return result;
 }
 
