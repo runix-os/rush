@@ -5,44 +5,75 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
+#include <string.h>
 #include <stdbool.h>
+
 #include "rush.h"
 #include "rush_input.h"
 
-void
-rush_prompt (char *line, int result) {
+extern rerrno errno;
+
+rerrno
+rush_prompt (char *line,
+             int   result)
+{
+    rerrno rc = 0;
+    int size;
     char *color_code;
+
     if (result != 0) {
         color_code = "\x1b[31m"; // RED
     } else {
         color_code = "\x1b[32m"; // GREEN
     }
-    printf("%s~> \x1b[0m", color_code);
+    size = printf("%s~> \x1b[0m", color_code);
+    if (size < 0) {
+        rc = errno;
+    }
     rush_getline(line, RUSH_MAX_CMD_SIZE);
+    return rc;
 }
 
-int
-rush_loop (void) {
-    int result = 0;
-    bool running = true;
-    char cmd[RUSH_MAX_CMD_SIZE];
+rerrno
+rush_runcmd (char *cmd)
+{
+    rerrno rc = 0;
 
-    while (running) {
-        rush_prompt(cmd, result);
-        result = system(cmd);
-        if (result != 0)
-            running = false;
+    //char **tokens = NULL;
+    //rc = rush_tokenize(cmd, &tokens);
+    if (RERR_IS_OK(rc)) {
+        rc = system(cmd);
     }
 
-    return result;
+    return rc;
+}
+
+rerrno
+rush_loop (void)
+{
+    rerrno rc = 0;
+    char cmd[RUSH_MAX_CMD_SIZE];
+
+    while (RERR_IS_OK(rc)) {
+        rc = rush_prompt(cmd, rc);
+        if (RERR_IS_OK(rc)) {
+            rc = rush_runcmd(cmd);
+        }
+        if (RERR_IS_NOTOK(rc)) {
+            printf("rush: error: %s\n", strerror(rc));
+        }
+    }
+    return rc;
 }
 
 int
 main (int    argc,
-      char **argv) {
-    int result = 0;
+      char **argv)
+{
+    rerrno rc = 0;
     /* Enter loop */
-    result = rush_loop();
-    return result;
+    rc = rush_loop();
+    return rc;
 }
 

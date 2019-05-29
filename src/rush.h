@@ -12,6 +12,11 @@
 /* Variables */
 #define RUSH_MAX_CMD_SIZE 2048
 
+/* Error Macros */
+typedef int rerrno;
+#define RERR_IS_OK(err) ((err) == 0)
+#define RERR_IS_NOTOK(err) ((err) != 0)
+
 /*
  * Print the configured prompt and then read user input
  * into the passed line string
@@ -21,10 +26,21 @@
  * :param:
  * Last result of the shell to change prompt color
  */
-void rush_prompt(char *line, int result);
+rerrno rush_prompt (char *line,
+                    int   result);
+
+/*
+ * Take the input command, run it through any parsing to find
+ * the steps that need to be taken to run it, then open any
+ * needed processes, run and return the results
+ *
+ * :param:
+ * String declaring the command to be run
+ */
+rerrno rush_runcmd(char *cmd);
 
 /*
  * Main loop of the shell, exit from this function indicates
  * user has triggered exit of the shell process (logout)
  */
-int rush_loop (void);
+rerrno rush_loop (void);

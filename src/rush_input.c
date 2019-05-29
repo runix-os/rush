@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include "rush_input.h"
 
-void rush_getline (char *line, int size) {
+void rush_getline (char *line,
+                   int   size)
+{
     fgets(line, size, stdin);
 }
